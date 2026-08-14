@@ -1,0 +1,31 @@
+{
+  "name": "browser-vault",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "bv": "./dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "pino": "^10.0.0",
+    "playwright": "1.62.1",
+    "proper-lockfile": "4.1.2",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "@types/proper-lockfile": "^4.1.4",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  }
+}
