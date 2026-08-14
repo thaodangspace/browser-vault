@@ -11,7 +11,12 @@ RUN npm run build
 FROM mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble AS runtime
 WORKDIR /app
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y xvfb x11vnc novnc websockify \
+    && rm -rf /var/lib/apt/lists/*
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
+COPY docker/vnc-entrypoint.sh /app/docker/vnc-entrypoint.sh
+RUN chmod 0755 /app/docker/vnc-entrypoint.sh
 ENTRYPOINT ["node", "dist/cli.js"]

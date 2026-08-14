@@ -9,6 +9,8 @@ import { profileLoginCommand } from "./commands/profile-login.command.js";
 import { profileStatusCommand } from "./commands/profile-status.command.js";
 import { profileVerifyCommand } from "./commands/profile-verify.command.js";
 import { runProfileCommand } from "./commands/run.command.js";
+import { closeDockerBrowserCommand, openProfileInDockerCommand } from "./commands/open.command.js";
+import { browseProfileCommand } from "./commands/browse.command.js";
 import { VaultError } from "./utils/errors.js";
 
 const program = new Command();
@@ -55,6 +57,18 @@ program
   .allowExcessArguments()
   .passThroughOptions()
   .action((name: string, command: string[]) => runProfileCommand(name, command));
+
+program
+  .command("open <name> <url>")
+  .description("Open a URL with a profile in local Docker/noVNC")
+  .action((name: string, url: string) => openProfileInDockerCommand(name, url));
+
+program
+  .command("browse <name> <url>")
+  .description("Open a URL with a headed profile session")
+  .action((name: string, url: string) => browseProfileCommand(name, url));
+
+program.command("close").description("Stop the Docker/noVNC browser service").action(() => closeDockerBrowserCommand());
 
 program.parseAsync().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
