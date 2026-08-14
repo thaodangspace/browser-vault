@@ -10,3 +10,20 @@ services:
       BROWSER_VAULT_HEADLESS: "1"
     volumes:
       - ./data:/vault
+
+  # `bv open` creates one ephemeral container from this service per session.
+  # It intentionally has no vault mount: the command supplies only the selected
+  # profile directory as a read-only bind mount.
+  browser-vault-vnc:
+    image: browser-vault-browser-vault
+    build:
+      context: .
+    profiles: [vnc]
+    init: true
+    ipc: host
+    entrypoint: ["/app/docker/vnc-entrypoint.sh"]
+    environment:
+      BROWSER_VAULT_HOME: /vault
+      BROWSER_VAULT_HEADLESS: "0"
+    ports:
+      - "127.0.0.1:${BROWSER_VAULT_VNC_PORT:-6080}:6080"
