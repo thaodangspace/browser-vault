@@ -7,6 +7,7 @@ import { deleteProfileCommand } from "./commands/profile-delete.command.js";
 import { listProfilesCommand } from "./commands/profile-list.command.js";
 import { profileLoginCommand } from "./commands/profile-login.command.js";
 import { profileStatusCommand } from "./commands/profile-status.command.js";
+import { profileVerifyCommand } from "./commands/profile-verify.command.js";
 import { VaultError } from "./utils/errors.js";
 
 function notImplemented(command: string): never {
@@ -43,6 +44,7 @@ profile
   .option("--reuse-state", "Seed the login browser from existing storage state")
   .option("--headless", "Run Chromium headlessly")
   .action((name: string, options) => profileLoginCommand(name, options));
+profile.command("verify <name>").description("Verify profile authentication").action((name: string) => profileVerifyCommand(name));
 profile
   .command("delete <name>")
   .description("Delete a profile and its saved authentication data")

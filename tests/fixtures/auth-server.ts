@@ -40,10 +40,12 @@ const dashboardPage = `<!doctype html>
 
 export interface FixtureServer {
   url: string;
+  invalidateSessions(): void;
   close(): Promise<void>;
 }
 
 export async function startFixtureServer(): Promise<FixtureServer> {
+  let sessionValid = true;
   const server: Server = createServer((request, response) => {
     const requestUrl = new URL(request.url ?? "/", "http://fixture.local");
 
@@ -53,6 +55,7 @@ export async function startFixtureServer(): Promise<FixtureServer> {
     }
 
     if (request.method === "POST" && requestUrl.pathname === "/login") {
+      sessionValid = true;
       response.writeHead(302, {
         location: "/dashboard",
         "set-cookie": `${sessionCookie}; ${cookieAttributes}`,
@@ -62,7 +65,7 @@ export async function startFixtureServer(): Promise<FixtureServer> {
     }
 
     if (request.method === "GET" && requestUrl.pathname === "/dashboard") {
-      if (!hasValidSession(request.headers.cookie)) {
+      if (!sessionValid || !hasValidSession(request.headers.cookie)) {
         response.writeHead(302, { location: "/login" });
         response.end();
         return;
@@ -94,6 +97,9 @@ export async function startFixtureServer(): Promise<FixtureServer> {
   const address = server.address() as AddressInfo;
   return {
     url: `http://127.0.0.1:${address.port}`,
+    invalidateSessions: () => {
+      sessionValid = false;
+    },
     close: () => new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve()))),
   };
 }
