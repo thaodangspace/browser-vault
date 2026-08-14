@@ -16,6 +16,10 @@ export function artifactsDir(): string {
   return path.join(getVaultHome(), "artifacts");
 }
 
+export function runtimeDir(): string {
+  return path.join(getVaultHome(), "runtime");
+}
+
 /** The caller must validate name with ProfileNameSchema before using this. */
 export function profileDir(name: string): string {
   return path.join(profilesDir(), name);

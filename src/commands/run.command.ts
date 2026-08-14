@@ -1,9 +1,8 @@
 import { constants } from "node:os";
 import { spawn } from "node:child_process";
 import { profileRepository } from "../profiles/profile.repository.js";
-import { storageStatePath } from "../config/paths.js";
-import { NoAuthStateError, VaultError } from "../utils/errors.js";
-import { pathExists } from "../utils/filesystem.js";
+import { createRuntimeStateSnapshot } from "../profiles/runtime-state-snapshot.js";
+import { VaultError } from "../utils/errors.js";
 
 function signalExitCode(signal: NodeJS.Signals): number {
   return 128 + (constants.signals[signal] ?? 1);
@@ -16,47 +15,48 @@ export async function runProfileCommand(name: string, childArguments: string[]):
     throw new VaultError(`Profile mode "${profile.mode}" is not implemented.`);
   }
 
-  const statePath = storageStatePath(name);
-  if (!(await pathExists(statePath))) {
-    throw new NoAuthStateError(name);
-  }
   if (normalizedChildArguments.length === 0) {
     throw new VaultError("A child command is required. Usage: bv run <name> -- <command...>");
   }
 
-  const [command, ...arguments_] = normalizedChildArguments;
-  const child = spawn(command, arguments_, {
-    stdio: "inherit",
-    env: {
-      ...process.env,
-      BROWSER_VAULT_PROFILE: profile.name,
-      BROWSER_VAULT_MODE: profile.mode,
-      BROWSER_VAULT_STORAGE_STATE: statePath,
-    },
-  });
-
-  await new Promise<void>((resolve, reject) => {
-    const forwardSignal = (signal: NodeJS.Signals) => {
-      if (!child.killed) child.kill(signal);
-    };
-    const onSigint = () => forwardSignal("SIGINT");
-    const onSigterm = () => forwardSignal("SIGTERM");
-    process.once("SIGINT", onSigint);
-    process.once("SIGTERM", onSigterm);
-
-    const cleanup = () => {
-      process.off("SIGINT", onSigint);
-      process.off("SIGTERM", onSigterm);
-    };
-    child.once("error", (error) => {
-      cleanup();
-      reject(error);
+  const snapshot = await createRuntimeStateSnapshot(name);
+  try {
+    const [command, ...arguments_] = normalizedChildArguments;
+    const child = spawn(command, arguments_, {
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        BROWSER_VAULT_PROFILE: profile.name,
+        BROWSER_VAULT_MODE: profile.mode,
+        BROWSER_VAULT_STORAGE_STATE: snapshot.path,
+      },
     });
-    child.once("close", (code, signal) => {
-      cleanup();
-      if (signal) process.exitCode = signalExitCode(signal);
-      else process.exitCode = code ?? 1;
-      resolve();
+
+    await new Promise<void>((resolve, reject) => {
+      const forwardSignal = (signal: NodeJS.Signals) => {
+        if (!child.killed) child.kill(signal);
+      };
+      const onSigint = () => forwardSignal("SIGINT");
+      const onSigterm = () => forwardSignal("SIGTERM");
+      process.once("SIGINT", onSigint);
+      process.once("SIGTERM", onSigterm);
+
+      const removeSignalHandlers = () => {
+        process.off("SIGINT", onSigint);
+        process.off("SIGTERM", onSigterm);
+      };
+      child.once("error", (error) => {
+        removeSignalHandlers();
+        reject(error);
+      });
+      child.once("close", (code, signal) => {
+        removeSignalHandlers();
+        if (signal) process.exitCode = signalExitCode(signal);
+        else process.exitCode = code ?? 1;
+        resolve();
+      });
     });
-  });
+  } finally {
+    await snapshot.cleanup();
+  }
 }

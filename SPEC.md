@@ -1043,7 +1043,7 @@ Allow an existing external agent script to discover a profile without needing Br
 ```text
 BROWSER_VAULT_PROFILE=github
 BROWSER_VAULT_MODE=storage-state
-BROWSER_VAULT_STORAGE_STATE=/vault/profiles/github/storage-state.json
+BROWSER_VAULT_STORAGE_STATE=/vault/runtime/run-<id>/storage-state.json
 ```
 
 Then spawns the child command.
@@ -1059,9 +1059,9 @@ const context = await browser.newContext({
 
 Rules:
 
-1. path is provided read-only by convention;
-2. child process does not receive passwords;
-3. child process MUST NOT automatically replace the state file;
+1. the path points to a private, per-run snapshot outside the canonical profile directory;
+2. child writes affect only that disposable snapshot, which MUST be removed after exit or spawn failure;
+3. child process does not receive passwords or a canonical-state path;
 4. propagate child exit code;
 5. forward SIGINT/SIGTERM.
 

@@ -44,7 +44,7 @@ Or wrap an existing script:
 node dist/cli.js run github -- node agent.js
 ```
 
-The wrapper exports `BROWSER_VAULT_PROFILE`, `BROWSER_VAULT_MODE`, and the absolute `BROWSER_VAULT_STORAGE_STATE` path. It does not provide passwords.
+The wrapper exports `BROWSER_VAULT_PROFILE`, `BROWSER_VAULT_MODE`, and an absolute `BROWSER_VAULT_STORAGE_STATE` path to a private, disposable copy of the canonical state. Child writes affect only that copy, which is removed when the command exits. It does not provide passwords.
 
 ## Commands
 
