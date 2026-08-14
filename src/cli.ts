@@ -5,6 +5,7 @@ import { initializeVault } from "./commands/init.command.js";
 import { createProfileCommand } from "./commands/profile-create.command.js";
 import { deleteProfileCommand } from "./commands/profile-delete.command.js";
 import { listProfilesCommand } from "./commands/profile-list.command.js";
+import { profileLoginCommand } from "./commands/profile-login.command.js";
 import { profileStatusCommand } from "./commands/profile-status.command.js";
 import { VaultError } from "./utils/errors.js";
 
@@ -36,6 +37,12 @@ profile
 
 profile.command("list").description("List profiles").action(() => listProfilesCommand());
 profile.command("status <name>").description("Show profile status").action((name: string) => profileStatusCommand(name));
+profile
+  .command("login <name>")
+  .description("Interactively log in and save browser authentication state")
+  .option("--reuse-state", "Seed the login browser from existing storage state")
+  .option("--headless", "Run Chromium headlessly")
+  .action((name: string, options) => profileLoginCommand(name, options));
 profile
   .command("delete <name>")
   .description("Delete a profile and its saved authentication data")

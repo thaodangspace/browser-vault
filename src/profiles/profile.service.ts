@@ -1,4 +1,5 @@
 import { storageStatePath } from "../config/paths.js";
+import { loginStorageState, type LoginOptions } from "../browser/login.js";
 import { withProfileLock } from "../locks/profile-lock.js";
 import { pathExists } from "../utils/filesystem.js";
 import { InvalidProfileNameError } from "../utils/errors.js";
@@ -54,6 +55,14 @@ export class ProfileService {
   async status(name: string): Promise<{ profile: Profile; stateFilePresent: boolean }> {
     const profile = await this.repository.get(name);
     return { profile, stateFilePresent: await pathExists(storageStatePath(name)) };
+  }
+
+  async login(name: string, options: LoginOptions = {}): Promise<void> {
+    const profile = await this.repository.get(name);
+    if (profile.mode !== "storage-state") {
+      throw new Error(`Profile mode "${profile.mode}" is not implemented.`);
+    }
+    await loginStorageState(profile, options);
   }
 
   async delete(name: string): Promise<void> {
