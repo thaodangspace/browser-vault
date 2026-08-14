@@ -14,7 +14,8 @@ export interface ProfileLockOptions {
   retries?: number;
 }
 
-function lockFilePath(name: string): string {
+export function profileLockPath(name: string): string {
+  validateName(name);
   return path.join(locksDir(), `${name}.lock`);
 }
 
@@ -36,7 +37,7 @@ export async function withProfileLock<T>(name: string, fn: () => Promise<T>, opt
   let release: (() => Promise<void>) | undefined;
   try {
     release = await lockfile.lock(profileDir(name), {
-      lockfilePath: lockFilePath(name),
+      lockfilePath: profileLockPath(name),
       stale: options.stale ?? DEFAULT_STALE_MS,
       retries: {
         retries: options.retries ?? 2,

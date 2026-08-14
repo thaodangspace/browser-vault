@@ -1,4 +1,5 @@
 import { storageStatePath } from "../config/paths.js";
+import { withProfileLock } from "../locks/profile-lock.js";
 import { pathExists } from "../utils/filesystem.js";
 import { InvalidProfileNameError } from "../utils/errors.js";
 import { ProfileNameSchema, ProfileSchema, type Profile } from "./profile.schema.js";
@@ -53,6 +54,12 @@ export class ProfileService {
   async status(name: string): Promise<{ profile: Profile; stateFilePresent: boolean }> {
     const profile = await this.repository.get(name);
     return { profile, stateFilePresent: await pathExists(storageStatePath(name)) };
+  }
+
+  async delete(name: string): Promise<void> {
+    // Resolve before locking so missing profiles get the actionable repository error.
+    await this.repository.get(name);
+    await withProfileLock(name, () => this.repository.remove(name));
   }
 }
 

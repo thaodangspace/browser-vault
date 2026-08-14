@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import { initializeVault } from "./commands/init.command.js";
 import { createProfileCommand } from "./commands/profile-create.command.js";
+import { deleteProfileCommand } from "./commands/profile-delete.command.js";
 import { listProfilesCommand } from "./commands/profile-list.command.js";
 import { profileStatusCommand } from "./commands/profile-status.command.js";
 import { VaultError } from "./utils/errors.js";
@@ -35,6 +36,11 @@ profile
 
 profile.command("list").description("List profiles").action(() => listProfilesCommand());
 profile.command("status <name>").description("Show profile status").action((name: string) => profileStatusCommand(name));
+profile
+  .command("delete <name>")
+  .description("Delete a profile and its saved authentication data")
+  .option("--yes", "Confirm deletion without prompting")
+  .action((name: string, options) => deleteProfileCommand(name, options));
 
 program
   .command("run <name>")
