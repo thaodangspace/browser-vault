@@ -8,13 +8,11 @@ import { listProfilesCommand } from "./commands/profile-list.command.js";
 import { profileLoginCommand } from "./commands/profile-login.command.js";
 import { profileStatusCommand } from "./commands/profile-status.command.js";
 import { profileVerifyCommand } from "./commands/profile-verify.command.js";
+import { runProfileCommand } from "./commands/run.command.js";
 import { VaultError } from "./utils/errors.js";
 
-function notImplemented(command: string): never {
-  throw new Error(`${command} is not implemented`);
-}
-
 const program = new Command();
+program.enablePositionalOptions();
 
 program
   .name("bv")
@@ -52,10 +50,11 @@ profile
   .action((name: string, options) => deleteProfileCommand(name, options));
 
 program
-  .command("run <name>")
+  .command("run <name> [command...]")
   .description("Run a command with a profile's storage state")
-  .allowUnknownOption()
-  .action(() => notImplemented("bv run"));
+  .allowExcessArguments()
+  .passThroughOptions()
+  .action((name: string, command: string[]) => runProfileCommand(name, command));
 
 program.parseAsync().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
