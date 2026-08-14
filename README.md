@@ -66,7 +66,7 @@ Profile names must match `^[a-z0-9][a-z0-9-_]{0,63}$`.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `BROWSER_VAULT_HOME` | `./data` | Vault root directory |
-| `BROWSER_VAULT_HEADLESS` | `0` | Launch Chromium headlessly (`0`/`1`, `false`/`true`) |
+| `BROWSER_VAULT_HEADLESS` | `0` on the host; `1` in Docker Compose | Launch Chromium headlessly (`0`/`1`, `false`/`true`) |
 | `BROWSER_VAULT_LOG_LEVEL` | `info` | Pino log level |
 | `BROWSER_VAULT_ARTIFACTS` | `0` | Enable authenticated trace artifacts; treat them as sensitive |
 
@@ -88,7 +88,7 @@ npm run docker:build
 docker compose run --rm browser-vault profile list
 ```
 
-Compose bind-mounts `./data` into `/vault`; authentication state is never baked into the image. Docker is intended for headless workloads. Perform interactive login on the host.
+Compose bind-mounts `./data` into `/vault`; authentication state is never baked into the image. Chromium is headed by default on the host so `bv profile login` is interactive. Docker Compose sets `BROWSER_VAULT_HEADLESS=1` for headless workloads; perform interactive login on the host. Visual observation/noVNC is not enabled by default and will be a separate opt-in mode.
 
 ## Development
 
