@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts"],
     pool: "threads",
-    testTimeout: 10_000,
+    // Browser and real-process integration tests get a deliberately longer bound.
+    testTimeout: 15_000,
   },
 });
