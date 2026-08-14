@@ -9,5 +9,6 @@ services:
     ipc: host
     environment:
       BROWSER_VAULT_HOME: /vault
+      BROWSER_VAULT_HEADLESS: "1"
     volumes:
       - ./data:/vault

@@ -37,7 +37,7 @@ describe.skipIf(!dockerAvailable)("Docker image", () => {
     });
     expect(listOutput).toContain("NAME");
 
-    execFileSync("docker", ["compose", "run", "--rm", "--entrypoint", "node", "browser-vault", "-e", "import('playwright').then(async ({ chromium }) => { const browser = await chromium.launch({ headless: true }); await browser.close(); })"], {
+    execFileSync("docker", ["compose", "run", "--rm", "--entrypoint", "node", "browser-vault", "-e", "import('./dist/browser/launch.js').then(async ({ launchChromium }) => { const browser = await launchChromium(); await browser.close(); })"], {
       cwd: projectRoot,
       env: environment,
       stdio: "inherit",
