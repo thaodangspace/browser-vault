@@ -12,7 +12,8 @@
     "start": "node dist/cli.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -p tsconfig.test.json"
+    "typecheck": "tsc -p tsconfig.test.json",
+    "docker:build": "PLAYWRIGHT_VERSION=$(node -p \"require('./package-lock.json').packages['node_modules/playwright'].version\") docker compose build"
   },
   "dependencies": {
     "commander": "^15.0.0",
