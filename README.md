@@ -90,36 +90,34 @@ docker compose run --rm browser-vault profile list
 
 Compose bind-mounts `./data` into `/vault`; authentication state is never baked into the image. Docker Compose sets `BROWSER_VAULT_HEADLESS=1` for normal headless workloads.
 
-### Open a saved profile in Docker/noVNC
+### Open saved profiles in Docker/noVNC
 
-Link the local CLI once, then `bv open` starts the local-only noVNC service and opens the URL in a read-only, headed profile session:
+`bv open` runs each headed browser in its own temporary Docker container, X display, and noVNC endpoint. The selected profile is mounted read-only, so closing the session cannot update its canonical authentication state.
 
 ```bash
 npm run build
 npm link
 npm run docker:build
-bv open github https://asprdt.vsee.io
+
+bv open personal https://example.com --port 6081
+bv open company https://example.com --port 6082
 ```
 
-Visit [http://localhost:6080/vnc.html?autoconnect=true&resize=scale](http://localhost:6080/vnc.html?autoconnect=true&resize=scale) to view and use Chromium. Press Ctrl-C to close that browser session; noVNC remains available for another `bv open` command. Stop all browser sessions and noVNC when finished:
+Open the printed local URL (for example, [http://127.0.0.1:6081/vnc.html?autoconnect=true&resize=scale](http://127.0.0.1:6081/vnc.html?autoconnect=true&resize=scale)) for the corresponding session. Each `bv open` remains in the foreground; press Ctrl-C in that terminal to close only that session and release its port. The default port is `6080`; choose a distinct `--port` for each concurrent session.
 
-```bash
-bv close
-```
+Every session prints an ID. To clean up an orphaned session from another terminal, run `bv close <session-id>`; `bv close` stops every active Browser Vault noVNC session.
 
 ### Interactive Docker login through noVNC
 
-The opt-in `browser-vault-vnc` service runs headed Chromium in a virtual display and exposes noVNC **only on the local machine**. To keep noVNC running between viewer and login sessions, start the service, then execute the interactive login inside it:
+For a one-off Dockerized login, mount the vault read-write explicitly while starting the noVNC container:
 
 ```bash
 npm run docker:build
-docker compose --profile vnc up -d browser-vault-vnc
-docker compose exec browser-vault-vnc node /app/dist/cli.js profile login github
+docker compose --profile vnc run --rm --service-ports \
+  -v "$(pwd)/data:/vault" browser-vault-vnc profile login github
 ```
 
-Open [http://localhost:6080/vnc.html?autoconnect=true&resize=scale](http://localhost:6080/vnc.html?autoconnect=true&resize=scale) in a browser, complete login in Chromium, then return to the terminal and press Enter to save the state. The noVNC listener remains available when its browser clients disconnect and after the login command completes; stop it with `docker compose --profile vnc stop browser-vault-vnc`.
-
-For a one-off login instead, use `docker compose --profile vnc run --rm --service-ports browser-vault-vnc profile login github`. `--service-ports` is required because `docker compose run` does not otherwise publish the service port.
+Open [http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=scale](http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=scale), complete login in Chromium, then return to the terminal and press Enter to save the state. The noVNC service exits when the login command completes.
 
 noVNC has no password because its port is bound to `127.0.0.1`. Do not change that binding to a network-accessible address without adding an authenticated, encrypted access layer: the display can reveal credentials and active sessions.
 

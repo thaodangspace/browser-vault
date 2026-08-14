@@ -60,15 +60,19 @@ program
 
 program
   .command("open <name> <url>")
-  .description("Open a URL with a profile in local Docker/noVNC")
-  .action((name: string, url: string) => openProfileInDockerCommand(name, url));
+  .description("Open a URL with a profile in an isolated local Docker/noVNC session")
+  .option("--port <port>", "Local noVNC port", "6080")
+  .action((name: string, url: string, options) => openProfileInDockerCommand(name, url, options));
 
 program
   .command("browse <name> <url>")
   .description("Open a URL with a headed profile session")
   .action((name: string, url: string) => browseProfileCommand(name, url));
 
-program.command("close").description("Stop the Docker/noVNC browser service").action(() => closeDockerBrowserCommand());
+program
+  .command("close [sessionId]")
+  .description("Stop one, or all, Browser Vault Docker/noVNC sessions")
+  .action((sessionId: string | undefined) => closeDockerBrowserCommand(sessionId));
 
 program.parseAsync().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
