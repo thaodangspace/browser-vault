@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { profileDir, storageStatePath } from "../config/paths.js";
+import { profileDir } from "../config/paths.js";
 import { ProfileNameSchema } from "../profiles/profile.schema.js";
 import { profileRepository } from "../profiles/profile.repository.js";
 import { findDockerContainers, removeDockerContainers, runDockerCompose } from "../utils/docker-compose.js";
-import { InvalidProfileNameError, NoAuthStateError, VaultError } from "../utils/errors.js";
-import { pathExists } from "../utils/filesystem.js";
+import { InvalidProfileNameError, VaultError } from "../utils/errors.js";
 import { validateHttpUrl } from "../utils/http-url.js";
+import { findAvailableLocalPort } from "../utils/local-port.js";
 
 const DEFAULT_VNC_PORT = 6080;
 
@@ -32,19 +32,18 @@ function parseVncPort(rawPort: string | undefined): number {
  */
 export async function openProfileInDockerCommand(
   name: string,
-  rawUrl: string,
+  rawUrl: string | undefined,
   options: OpenProfileInDockerOptions = {},
 ): Promise<void> {
   if (!ProfileNameSchema.safeParse(name).success) throw new InvalidProfileNameError(name);
-  const url = validateHttpUrl(rawUrl);
-  const port = parseVncPort(options.port);
+  const requestedPort = parseVncPort(options.port);
 
   const profile = await profileRepository.get(name);
+  const url = validateHttpUrl(rawUrl ?? profile.startUrl);
   if (profile.mode !== "storage-state") {
     throw new VaultError(`Profile mode "${profile.mode}" is not implemented.`);
   }
-  if (!(await pathExists(storageStatePath(name)))) throw new NoAuthStateError(name);
-
+  const port = await findAvailableLocalPort(requestedPort);
   const sessionId = `bv-open-${randomUUID()}`;
   const profileMount = `${profileDir(name)}:/vault/profiles/${name}:ro`;
   console.log(`Session: ${sessionId}`);

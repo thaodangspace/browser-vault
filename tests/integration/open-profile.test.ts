@@ -9,7 +9,6 @@ import { loginStorageState } from "../../src/browser/login.js";
 import { openProfile } from "../../src/browser/session.js";
 import { storageStatePath } from "../../src/config/paths.js";
 import { profileService } from "../../src/profiles/profile.service.js";
-import { NoAuthStateError } from "../../src/utils/errors.js";
 import { removeDirRecursive } from "../../src/utils/filesystem.js";
 import { startFixtureServer, type FixtureServer } from "../fixtures/auth-server.js";
 import { readFile } from "node:fs/promises";
@@ -71,10 +70,17 @@ describe.skipIf(!hasChromium)("openProfile", () => {
     expect(await fileHash(storageStatePath("fixture"))).toBe(before);
   });
 
-  it("gives an actionable error when no authentication state exists", async () => {
+  it("opens an empty context when no saved authentication state exists", async () => {
     await profileService.create({ name: "no-state", startUrl: `${fixture.url}/login` });
 
-    await expect(openProfile("no-state", { headless: true })).rejects.toBeInstanceOf(NoAuthStateError);
+    const session = await openProfile("no-state", { headless: true });
+    try {
+      const page = await session.context.newPage();
+      await page.goto(`${fixture.url}/dashboard`);
+      expect(await page.getByRole("heading", { name: "Fixture login" }).isVisible()).toBe(true);
+    } finally {
+      await session.close();
+    }
   });
 
   it("keeps agent context cookie mutations isolated", async () => {

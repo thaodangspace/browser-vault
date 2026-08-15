@@ -1,6 +1,6 @@
 # Browser Vault
 
-A local-first credential-store for reusable Playwright browser authentication. Operators log in interactively once; agent code opens isolated, authenticated contexts from the saved state without handling passwords.
+A local-first credential-store for reusable Playwright browser state. Operators can log in interactively once; agent code opens isolated contexts from saved state when it is available, without handling passwords.
 
 > **Security warning:** `data/` is a credential store. `storage-state.json` can contain active session cookies, localStorage, and IndexedDB data. Do not commit it, print it, or copy it into Docker images. Deleting a local profile does **not** revoke the corresponding server-side session; use the website's session-management/revocation controls when a session is compromised.
 
@@ -23,6 +23,8 @@ node dist/cli.js profile login github
 node dist/cli.js profile status github
 node dist/cli.js profile verify github
 ```
+
+A profile stores one browser-state snapshot, which can include sessions for multiple sites (for example, GitHub, Google, and Bitbucket). `openProfile()` does not require saved authentication: a new profile opens an empty, isolated context. Run `profile login` when you want to save reusable browser sessions.
 
 Use the saved state from an agent:
 
@@ -90,20 +92,20 @@ docker compose run --rm browser-vault profile list
 
 Compose bind-mounts `./data` into `/vault`; authentication state is never baked into the image. Docker Compose sets `BROWSER_VAULT_HEADLESS=1` for normal headless workloads.
 
-### Open saved profiles in Docker/noVNC
+### Open profiles in Docker/noVNC
 
-`bv open` runs each headed browser in its own temporary Docker container, X display, and noVNC endpoint. The selected profile is mounted read-only, so closing the session cannot update its canonical authentication state.
+`bv open` runs each headed browser in its own temporary Docker container, X display, and noVNC endpoint. A profile may have saved sessions or no state at all; the selected profile is mounted read-only, so closing the session cannot update its canonical authentication state.
 
 ```bash
 npm run build
 npm link
 npm run docker:build
 
-bv open personal https://example.com --port 6081
-bv open company https://example.com --port 6082
+bv open personal # opens the profile's configured start URL
+bv open company https://example.com # optionally override the start URL; automatically uses the next free port
 ```
 
-Open the printed local URL (for example, [http://127.0.0.1:6081/vnc.html?autoconnect=true&resize=scale](http://127.0.0.1:6081/vnc.html?autoconnect=true&resize=scale)) for the corresponding session. Each `bv open` remains in the foreground; press Ctrl-C in that terminal to close only that session and release its port. The default port is `6080`; choose a distinct `--port` for each concurrent session.
+Open the printed local URL (for example, [http://127.0.0.1:6081/vnc.html?autoconnect=true&resize=scale](http://127.0.0.1:6081/vnc.html?autoconnect=true&resize=scale)) for the corresponding session. Each `bv open` remains in the foreground; press Ctrl-C in that terminal to close only that session and release its port. `bv open` starts at port `6080` and automatically selects the next free local port. Use `--port` to choose a different starting port.
 
 Every session prints an ID. To clean up an orphaned session from another terminal, run `bv close <session-id>`; `bv close` stops every active Browser Vault noVNC session.
 

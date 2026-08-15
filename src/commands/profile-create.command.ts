@@ -4,5 +4,5 @@ export async function createProfileCommand(name: string, options: Omit<CreatePro
   const profile = await profileService.create({ name, ...options });
   write(`Created profile: ${profile.name}`);
   write(`Mode: ${profile.mode}`);
-  write("Login required: yes");
+  write("Login optional: save reusable site sessions with bv profile login.");
 }

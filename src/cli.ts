@@ -59,10 +59,10 @@ program
   .action((name: string, command: string[]) => runProfileCommand(name, command));
 
 program
-  .command("open <name> <url>")
-  .description("Open a URL with a profile in an isolated local Docker/noVNC session")
-  .option("--port <port>", "Local noVNC port", "6080")
-  .action((name: string, url: string, options) => openProfileInDockerCommand(name, url, options));
+  .command("open <name> [url]")
+  .description("Open a profile's start URL, or a supplied URL, in an isolated local Docker/noVNC session")
+  .option("--port <port>", "Starting local noVNC port (default: 6080; selects the next free port)")
+  .action((name: string, url: string | undefined, options) => openProfileInDockerCommand(name, url, options));
 
 program
   .command("browse <name> <url>")

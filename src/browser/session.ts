@@ -4,7 +4,7 @@ import { artifactsDir, storageStatePath } from "../config/paths.js";
 import { getEnvironment } from "../config/env.js";
 import { profileRepository } from "../profiles/profile.repository.js";
 import type { Profile } from "../profiles/profile.schema.js";
-import { NoAuthStateError, VaultError } from "../utils/errors.js";
+import { VaultError } from "../utils/errors.js";
 import { ensureDir, pathExists } from "../utils/filesystem.js";
 import { logger } from "../utils/logger.js";
 import { launchChromium } from "./launch.js";
@@ -28,9 +28,7 @@ export async function openProfile(name: string, options: OpenProfileOptions = {}
   }
 
   const statePath = storageStatePath(name);
-  if (!(await pathExists(statePath))) {
-    throw new NoAuthStateError(name);
-  }
+  const hasSavedState = await pathExists(statePath);
 
   const traceEnabled = options.trace ?? getEnvironment().BROWSER_VAULT_ARTIFACTS;
   let tracePath: string | undefined;
@@ -42,7 +40,7 @@ export async function openProfile(name: string, options: OpenProfileOptions = {}
 
   const browser = await launchChromium({ headless: options.headless });
   try {
-    const context = await browser.newContext({ storageState: statePath });
+    const context = await browser.newContext(hasSavedState ? { storageState: statePath } : undefined);
     try {
       if (tracePath) {
         await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
