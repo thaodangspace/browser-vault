@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.test.json",
-    "docker:build": "docker compose build --build-arg PLAYWRIGHT_VERSION=$(node -p \"require('./package-lock.json').packages['node_modules/playwright'].version\")",
+    "docker:check": "node scripts/check-playwright-runtime.mjs",
+    "docker:build": "npm run docker:check && docker compose build --build-arg PLAYWRIGHT_VERSION=$(node -p \"require('./package-lock.json').packages['node_modules/playwright'].version\")",
     "example:github": "node dist/examples/github-agent.js"
   },
   "dependencies": {
