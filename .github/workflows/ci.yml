@@ -36,6 +36,8 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     needs: test
+    env:
+      BROWSER_VAULT_DOCKER_TEST: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -54,6 +56,5 @@ jobs:
       - name: Build Docker image
         run: npm run docker:build
 
-      - name: Verify profile list in container
-        run: |
-          docker compose run --rm browser-vault profile list
+      - name: Run Docker smoke test (profile list + Chromium launch)
+        run: npm test

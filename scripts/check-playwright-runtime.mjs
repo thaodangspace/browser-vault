@@ -116,14 +116,12 @@ function ensureImageAvailable() {
     }
   }
 
-  // Non-interactive preflight without --pull: warn but don't block.
-  // The actual `docker compose build` will catch real failures.
-  console.warn(
-    "WARNING: Image not found locally and manifest resolution failed." +
-      " This may indicate a transient network/credential issue or a genuine version mismatch." +
-      " Run with --pull or BROWSER_VAULT_DOCKER_TEST=1 to fully validate."
+  // Default preflight: fail fast when the image cannot be verified.
+  // docker:build depends on this exiting non-zero so that mismatches are
+  // caught before the expensive Docker build step.
+  fatal(
+    `Expected Playwright Docker image is not available locally and registry resolution failed:\n  ${expectedImage}\n\nEnsure the image exists at ${IMAGE_REGISTRY}/${IMAGE_REPO}:v<version>-noble or update the runtime image strategy.`
   );
-  console.log("Image status: UNVERIFIED (preflight passed; docker compose build will confirm)");
 }
 
 ensureImageAvailable();

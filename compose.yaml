@@ -3,6 +3,8 @@ services:
     image: browser-vault-browser-vault
     build:
       context: .
+      args:
+        PLAYWRIGHT_VERSION: ${PLAYWRIGHT_VERSION}
     init: true
     ipc: host
     environment:
@@ -18,6 +20,8 @@ services:
     image: browser-vault-browser-vault
     build:
       context: .
+      args:
+        PLAYWRIGHT_VERSION: ${PLAYWRIGHT_VERSION}
     profiles: [vnc]
     init: true
     ipc: host
