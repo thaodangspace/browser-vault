@@ -137,14 +137,22 @@ describe("bv run", () => {
     expect(await hashState("fixture")).toBe(before);
   });
 
-  it("fails before spawning for missing profiles or missing state", async () => {
+  it("fails before spawning for missing profiles", async () => {
     const missing = await runCli("run", "missing", "--", process.execPath, "-e", "process.exit(0)");
+
     expect(missing.exitCode).not.toBe(0);
     expect(missing.output).toContain('Profile "missing" does not exist.');
+  });
 
+  it("runs an unauthenticated profile with an empty disposable state", async () => {
     await profileService.create({ name: "no-state", startUrl: "https://example.com/login" });
-    const noState = await runCli("run", "no-state", "--", process.execPath, "-e", "process.exit(0)");
-    expect(noState.exitCode).not.toBe(0);
-    expect(noState.output).toContain('Profile "no-state" has not been authenticated.');
+
+    const result = await runCli("run", "no-state", "--", process.execPath, "tests/fixtures/child-agent.mjs", "overwrite");
+    const childOutput = JSON.parse(result.output.split("\n").find((line) => line.startsWith("{")) ?? "{}");
+
+    expect(result.exitCode).toBe(0);
+    expect(childOutput).toMatchObject({ profile: "no-state", stateExists: true, stateWasOverwritten: true });
+    expect(await pathExists(storageStatePath("no-state"))).toBe(false);
+    expect(await readdir(runtimeDir())).toEqual([]);
   });
 });
